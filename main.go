@@ -4,6 +4,7 @@ import (
 	"vhiw-sales-log/initializers"
 	"vhiw-sales-log/routes"
 
+	"github.com/iris-contrib/middleware/cors"
 	"github.com/joho/godotenv"
 	"github.com/kataras/iris/v12"
 )
@@ -16,6 +17,14 @@ func init() {
 	initializers.ConnectDB()
 
 	app = iris.New()
+
+	crs := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
+	app.UseRouter(crs)
 }
 
 func main() {
