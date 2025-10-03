@@ -1,2 +1,5 @@
-.env
+# Ignore HTTP request files
 *.http
+
+# Ignore environment variables file
+.env
