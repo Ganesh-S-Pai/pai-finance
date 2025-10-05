@@ -3,6 +3,7 @@ package main
 import (
 	"vhiw-sales-log/initializers"
 	"vhiw-sales-log/routes"
+	"vhiw-sales-log/controllers"
 
 	"github.com/iris-contrib/middleware/cors"
 	"github.com/joho/godotenv"
@@ -30,9 +31,15 @@ func init() {
 func main() {
 	defer initializers.CloseDB()
 
-	router := app.Party("/api/v1/vhiw")
+	db := initializers.Client.Database("mongo-golang")
+	userColl := db.Collection("users")
 
-	routes.SalesLogRoutes(router)
+	router := app.Party("/api/v1")
+
+	routes.UserRoutes(router)
+
+	vhiwRoutes := router.Party("/vhiw", controllers.AuthMiddleware(userColl))
+	routes.SalesLogRoutes(vhiwRoutes)
 
 	app.Listen(":8080")
 }

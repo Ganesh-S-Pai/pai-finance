@@ -46,6 +46,7 @@ require (
 )
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/iris-contrib/middleware/cors v0.0.0-20250207234507-372f6828ef8c
 	github.com/joho/godotenv v1.5.1
