@@ -1,0 +1,7 @@
+# flyctl launch added from .gitignore
+# Ignore HTTP request files
+**\*.http
+
+# Ignore environment variables file
+**\.env
+fly.toml
