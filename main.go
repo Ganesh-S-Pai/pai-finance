@@ -36,8 +36,10 @@ func main() {
 
 	router := app.Party("/api/v1")
 
-	routes.UserRoutes(router)
-
+	routes.AuthRoutes(router)
+	
+	adminRoutes := router.Party("/admin", controllers.AuthMiddleware(userColl))
+	routes.UserRoutes(adminRoutes)
 	vhiwRoutes := router.Party("/vhiw", controllers.AuthMiddleware(userColl))
 	routes.SalesLogRoutes(vhiwRoutes)
 

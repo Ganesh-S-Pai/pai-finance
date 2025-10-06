@@ -1,0 +1,12 @@
+PUT https://vhiw-sales-log.fly.dev/api/v1/vhiw/sales-logs/68b98bca1efc33bd04029073
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjAwMTY5NjAsImlhdCI6MTc1OTc1Nzc2MCwic3ViIjoiNjhlMjMxZjJhMzM2YzE3Y2UwMDY1NDFjIn0.JA6Wy0kOE9ri62x6VNW9GRVtkSoRjmuJyaNc97XZexc
+
+{
+  "date": "2025-09-06T11:30:00Z",
+  "opening": 250,
+  "inward": 100,
+  "sales": 50,
+  "outward": 0,
+  "created": "2025-09-04T11:45:00Z"
+}

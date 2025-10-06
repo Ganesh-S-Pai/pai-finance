@@ -1,0 +1,3 @@
+GET http://localhost:8080/api/v1/admin/users
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjAwMTY5NjAsImlhdCI6MTc1OTc1Nzc2MCwic3ViIjoiNjhlMjMxZjJhMzM2YzE3Y2UwMDY1NDFjIn0.JA6Wy0kOE9ri62x6VNW9GRVtkSoRjmuJyaNc97XZexc

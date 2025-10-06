@@ -18,3 +18,13 @@ type User struct {
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
 }
+
+type UserRequest struct {
+	FirstName string             `bson:"first_name" json:"first_name"`
+	LastName  string             `bson:"last_name" json:"last_name"`
+	Email     string             `bson:"email" json:"email"`
+	Password  string             `bson:"password" json:"password"`
+	Phone     string             `bson:"phone" json:"phone"`
+	DOB       time.Time          `bson:"dob" json:"dob"`
+	Gender    string             `bson:"gender" json:"gender"`
+}

@@ -8,7 +8,7 @@ import (
 	"github.com/kataras/iris/v12/core/router"
 )
 
-func UserRoutes(rg router.Party) {
+func AuthRoutes(rg router.Party) {
 	router := rg.Party("/auth")
 
 	db := initializers.Client.Database("mongo-golang")
