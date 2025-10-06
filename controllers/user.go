@@ -57,9 +57,9 @@ func (uc *UserController) GetAllUsers(ctx iris.Context) {
 	}
 	defer cursor.Close(timeoutCtx)
 
-	var users []models.User
+	var users []models.UserResponse
 	for cursor.Next(timeoutCtx) {
-		var user models.User
+		var user models.UserResponse
 		if err := cursor.Decode(&user); err == nil {
 			users = append(users, user)
 		}
@@ -81,7 +81,7 @@ func (uc *UserController) GetUserByID(ctx iris.Context) {
 		return
 	}
 
-	var user models.User
+	var user models.UserResponse
 	err = uc.UserColl.FindOne(timeoutCtx, bson.M{"_id": objectID}).Decode(&user)
 	if err == mongo.ErrNoDocuments {
 		utils.SendResponse(ctx, http.StatusNotFound, "error", "User not found", nil)

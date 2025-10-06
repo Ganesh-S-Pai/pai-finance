@@ -27,3 +27,15 @@ type UserRequest struct {
 	DOB       time.Time          `bson:"dob" json:"dob"`
 	Gender    string             `bson:"gender" json:"gender"`
 }
+
+type UserResponse struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	FirstName string             `bson:"first_name" json:"first_name"`
+	LastName  string             `bson:"last_name" json:"last_name"`
+	Email     string             `bson:"email" json:"email"`
+	Phone     string             `bson:"phone" json:"phone"`
+	DOB       time.Time          `bson:"dob" json:"dob"`
+	Gender    string             `bson:"gender" json:"gender"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
+}
