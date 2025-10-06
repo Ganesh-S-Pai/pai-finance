@@ -1,5 +1,5 @@
 # Ignore HTTP request files
-# *.http
+*.http
 
 # Ignore environment variables file
 .env

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Ganesh-S-Pai/pai-finance/models"
+	"github.com/Ganesh-S-Pai/pai-finance/utils"
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,8 +28,7 @@ func NewSalesController(salesColl *mongo.Collection) *SalesController {
 func (sc *SalesController) AddSalesLog(ctx iris.Context) {
 	var salesLog models.SalesLog
 	if err := ctx.ReadJSON(&salesLog); err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": "Invalid request payload"})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid request payload", nil)
 		return
 	}
 
@@ -38,13 +38,11 @@ func (sc *SalesController) AddSalesLog(ctx iris.Context) {
 
 	result, err := sc.SalesColl.InsertOne(timeoutCtx, salesLog)
 	if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Failed to insert sales-logs: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to insert sales-logs: "+err.Error(), nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{"inserted_id": result.InsertedID})
+	utils.SendResponse(ctx, http.StatusOK, "success", "Sales log created successfully!", iris.Map{"inserted_id": result.InsertedID})
 }
 
 // GetSalesLogs → GET /salesLogs
@@ -54,8 +52,7 @@ func (sc *SalesController) GetSalesLogs(ctx iris.Context) {
 
 	cursor, err := sc.SalesColl.Find(timeoutCtx, bson.M{})
 	if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Failed to fetch sales-logs: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to fetch sales-logs: "+err.Error(), nil)
 		return
 	}
 	defer cursor.Close(timeoutCtx)
@@ -68,8 +65,7 @@ func (sc *SalesController) GetSalesLogs(ctx iris.Context) {
 		}
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(salesLogs)
+	utils.SendResponse(ctx, http.StatusOK, "success", "Fetched sales-logs successfully!: ", salesLogs)
 }
 
 // GetSalesLogByID → GET /salesLogs/{id}
@@ -82,25 +78,21 @@ func (sc *SalesController) GetSalesLogByID(ctx iris.Context) {
 	// ✅ Convert string ID to ObjectID
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": "Invalid ID format"})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID format", nil)
 		return
 	}
 
 	var salesLog models.SalesLog
 	err = sc.SalesColl.FindOne(timeoutCtx, bson.M{"_id": objectID}).Decode(&salesLog)
 	if err == mongo.ErrNoDocuments {
-		ctx.StatusCode(iris.StatusNotFound)
-		ctx.JSON(iris.Map{"error": "Sales log not found"})
+		utils.SendResponse(ctx, http.StatusNotFound, "error", "Sales log not found", nil)
 		return
 	} else if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Database error: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Database error: "+err.Error(), nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(salesLog)
+	utils.SendResponse(ctx, http.StatusOK, "success", "Fetched sales-log successfully!", salesLog)
 }
 
 // UpdateSalesLogByID → PUT /salesLogs/{id}
@@ -108,15 +100,13 @@ func (sc *SalesController) UpdateSalesLogByID(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": "Invalid ID format"})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID format", nil)
 		return
 	}
 
 	var updateData models.SalesLog
 	if err := ctx.ReadJSON(&updateData); err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": err.Error()})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid request payload"+err.Error(), nil)
 		return
 	}
 
@@ -135,19 +125,16 @@ func (sc *SalesController) UpdateSalesLogByID(ctx iris.Context) {
 
 	res, err := sc.SalesColl.UpdateByID(ctxTimeout, objectID, update)
 	if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Database error: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Database error: "+err.Error(), nil)
 		return
 	}
 
 	if res.MatchedCount == 0 {
-		ctx.StatusCode(iris.StatusNotFound)
-		ctx.JSON(iris.Map{"error": "Sales log not found"})
+		utils.SendResponse(ctx, http.StatusNotFound, "error", "Sales log not found", nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{"message": "Updated successfully"})
+	utils.SendResponse(ctx, http.StatusOK, "success", "Updated successfully", iris.Map{"id": objectID})
 }
 
 // DeleteSalesLogByID → DELETE /salesLogs/{id}
@@ -155,8 +142,7 @@ func (sc *SalesController) DeleteSalesLogByID(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": "Invalid ID format"})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID format", nil)
 		return
 	}
 
@@ -165,17 +151,14 @@ func (sc *SalesController) DeleteSalesLogByID(ctx iris.Context) {
 
 	res, err := sc.SalesColl.DeleteOne(ctxTimeout, bson.M{"_id": objectID})
 	if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Database error: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Database error: "+err.Error(), nil)
 		return
 	}
 
 	if res.DeletedCount == 0 {
-		ctx.StatusCode(iris.StatusNotFound)
-		ctx.JSON(iris.Map{"error": "Sales log not found"})
+		utils.SendResponse(ctx, http.StatusNotFound, "error", "Sales log not found", nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{"message": "Deleted successfully"})
+	utils.SendResponse(ctx, http.StatusOK, "success", "Deleted successfully", iris.Map{"id": objectID})
 }

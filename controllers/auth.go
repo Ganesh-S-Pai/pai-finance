@@ -45,23 +45,23 @@ func NewAuthController(userColl *mongo.Collection) *AuthController {
 func (ac *AuthController) Signup(ctx iris.Context) {
 	var req SignupRequest
 	if err := ctx.ReadJSON(&req); err != nil {
-		ctx.StopWithJSON(http.StatusBadRequest, iris.Map{"error": "invalid request payload"})
+		utils.SendResponseAndStop(ctx, http.StatusBadRequest, "error", "Invalid request payload", nil)
 		return
 	}
 
 	if req.Email == "" || req.Password == "" || req.FirstName == "" || req.LastName == "" || req.DOB == "" || req.Gender == "" || req.Phone == "" {
-		ctx.StopWithJSON(http.StatusBadRequest, iris.Map{"error": "first_name, last_name, DOB, gender, email and password are required"})
+		utils.SendResponseAndStop(ctx, http.StatusBadRequest, "error", "first_name, last_name, DOB, gender, email, phone and password are required", nil)
 		return
 	}
 
 	var dob time.Time
 	p, err := time.Parse("2006-01-02", req.DOB)
 	if err != nil {
-		ctx.StopWithJSON(http.StatusBadRequest, iris.Map{"error": "dob must be in YYYY-MM-DD format"})
+		utils.SendResponseAndStop(ctx, http.StatusBadRequest, "error", "dob must be in YYYY-MM-DD format", nil)
 		return
 	}
 	if p.After(time.Now()) {
-		ctx.StopWithJSON(http.StatusBadRequest, iris.Map{"error": "dob cannot be in the future"})
+		utils.SendResponseAndStop(ctx, http.StatusBadRequest, "error", "dob cannot be in the future", nil)
 		return
 	}
 	dob = p
@@ -71,17 +71,17 @@ func (ac *AuthController) Signup(ctx iris.Context) {
 
 	count, err := ac.UserColl.CountDocuments(cctx, bson.M{"email": strings.ToLower(req.Email)})
 	if err != nil {
-		ctx.StopWithJSON(http.StatusInternalServerError, iris.Map{"error": "database error"})
+		utils.SendResponseAndStop(ctx, http.StatusInternalServerError, "error", "database error", nil)
 		return
 	}
 	if count > 0 {
-		ctx.StopWithJSON(http.StatusConflict, iris.Map{"error": "email already registered"})
+		utils.SendResponseAndStop(ctx, http.StatusConflict, "error", "email already registered", nil)
 		return
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		ctx.StopWithJSON(http.StatusInternalServerError, iris.Map{"error": "failed to hash password"})
+		utils.SendResponseAndStop(ctx, http.StatusInternalServerError, "error", "failed to hash password", nil)
 		return
 	}
 
@@ -99,19 +99,18 @@ func (ac *AuthController) Signup(ctx iris.Context) {
 
 	res, err := ac.UserColl.InsertOne(cctx, user)
 	if err != nil {
-		ctx.StopWithJSON(http.StatusInternalServerError, iris.Map{"error": "failed to create user"})
+		utils.SendResponseAndStop(ctx, http.StatusInternalServerError, "error", "failed to create user", nil)
 		return
 	}
 	oid := res.InsertedID.(primitive.ObjectID)
 
 	token, err := utils.CreateToken(oid, ac.TokenTTLHours)
 	if err != nil {
-		ctx.StopWithJSON(http.StatusInternalServerError, iris.Map{"error": "failed to create token"})
+		utils.SendResponseAndStop(ctx, http.StatusInternalServerError, "error", "failed to create token", nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{
+	utils.SendResponse(ctx, http.StatusOK, "success", "Sign up successful!", iris.Map{
 		"token": token,
 		"user": iris.Map{
 			"id":         oid.Hex(),
@@ -133,12 +132,12 @@ func (ac *AuthController) Signup(ctx iris.Context) {
 func (ac *AuthController) Login(ctx iris.Context) {
 	var req LoginRequest
 	if err := ctx.ReadJSON(&req); err != nil {
-		ctx.StopWithJSON(http.StatusBadRequest, iris.Map{"error": "invalid request payload"})
+		utils.SendResponseAndStop(ctx, http.StatusBadRequest, "error", "Invalid request payload", nil)
 		return
 	}
 
 	if req.Email == "" || req.Password == "" {
-		ctx.StopWithJSON(http.StatusBadRequest, iris.Map{"error": "email and password required"})
+		utils.SendResponseAndStop(ctx, http.StatusBadRequest, "error", "email and password required", nil)
 		return
 	}
 
@@ -148,23 +147,22 @@ func (ac *AuthController) Login(ctx iris.Context) {
 	var user models.User
 	err := ac.UserColl.FindOne(cctx, bson.M{"email": strings.ToLower(req.Email)}).Decode(&user)
 	if err != nil {
-		ctx.StopWithJSON(http.StatusUnauthorized, iris.Map{"error": "invalid credentials"})
+		utils.SendResponseAndStop(ctx, http.StatusUnauthorized, "error", "Invalid credentials", nil)
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		ctx.StopWithJSON(http.StatusUnauthorized, iris.Map{"error": "invalid credentials"})
+		utils.SendResponseAndStop(ctx, http.StatusUnauthorized, "error", "Invalid credentials", nil)
 		return
 	}
 
 	token, err := utils.CreateToken(user.ID, ac.TokenTTLHours)
 	if err != nil {
-		ctx.StopWithJSON(http.StatusInternalServerError, iris.Map{"error": "failed to create token"})
+		utils.SendResponseAndStop(ctx, http.StatusInternalServerError, "error", "Failed to create token", nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{
+	utils.SendResponse(ctx, http.StatusOK, "success", "Login successful!", iris.Map{
 		"token": token,
 		"user": iris.Map{
 			"id":         user.ID.Hex(),
@@ -189,35 +187,21 @@ func AuthMiddleware(userColl *mongo.Collection) iris.Handler {
 	return func(ctx iris.Context) {
 		auth := ctx.GetHeader("Authorization")
 		if auth == "" {
-			ctx.StatusCode(http.StatusUnauthorized)
-			ctx.JSON(iris.Map{"error": "missing authorization header"})
+			utils.SendResponse(ctx, http.StatusUnauthorized, "error", "missing authorization header", nil)
 			return
 		}
 		parts := strings.SplitN(auth, " ", 2)
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			ctx.StatusCode(http.StatusUnauthorized)
-			ctx.JSON(iris.Map{"error": "invalid authorization header"})
+			utils.SendResponse(ctx, http.StatusUnauthorized, "error", "invalid authorization header", nil)
 			return
 		}
 		tokenStr := parts[1]
 		userID, err := utils.ValidateToken(tokenStr)
 		if err != nil {
-			ctx.StatusCode(http.StatusUnauthorized)
-			ctx.JSON(iris.Map{"error": "invalid token"})
+			utils.SendResponse(ctx, http.StatusUnauthorized, "error", "invalid token", nil)
 			return
 		}
-		// optionally: load user from DB and attach to ctx.Values()
 		ctx.Values().Set("userID", userID)
 		ctx.Next()
 	}
-}
-
-// Helper to extract userID from ctx (when used in other handlers)
-func GetUserIDFromCtx(ctx iris.Context) (primitive.ObjectID, bool) {
-	v := ctx.Values().Get("userID")
-	if v == nil {
-		return primitive.NilObjectID, false
-	}
-	oid, ok := v.(primitive.ObjectID)
-	return oid, ok
 }

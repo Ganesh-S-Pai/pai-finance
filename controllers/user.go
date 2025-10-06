@@ -1,13 +1,12 @@
 package controllers
 
 import (
-	// "net/http"
-
 	"context"
 	"net/http"
 	"time"
 
 	"github.com/Ganesh-S-Pai/pai-finance/models"
+	"github.com/Ganesh-S-Pai/pai-finance/utils"
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
@@ -29,8 +28,7 @@ func NewUserController(userColl *mongo.Collection) *UserController {
 func (uc *UserController) AddUser(ctx iris.Context) {
 	var user models.UserRequest
 	if err := ctx.ReadJSON(&user); err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": "Invalid request payload"})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid request payload", nil)
 		return
 	}
 
@@ -40,13 +38,11 @@ func (uc *UserController) AddUser(ctx iris.Context) {
 
 	result, err := uc.UserColl.InsertOne(timeoutCtx, user)
 	if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Failed to insert user: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to insert user: "+err.Error(), nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{"data": iris.Map{"user_id": result.InsertedID}, "message": "User created successfully!"})
+	utils.SendResponse(ctx, http.StatusOK, "success", "User created successfully!", iris.Map{"user_id": result.InsertedID})
 }
 
 // GetAllUsers → GET /users
@@ -56,8 +52,7 @@ func (uc *UserController) GetAllUsers(ctx iris.Context) {
 
 	cursor, err := uc.UserColl.Find(timeoutCtx, bson.M{})
 	if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Failed to fetch users: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to fetch users: "+err.Error(), nil)
 		return
 	}
 	defer cursor.Close(timeoutCtx)
@@ -70,8 +65,7 @@ func (uc *UserController) GetAllUsers(ctx iris.Context) {
 		}
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{"data": users, "message": "Users fetched successfully!"})
+	utils.SendResponse(ctx, http.StatusOK, "success", "Users fetched successfully!", users)
 }
 
 // GetUserByID → GET /users/{id}
@@ -83,25 +77,21 @@ func (uc *UserController) GetUserByID(ctx iris.Context) {
 
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": "Invalid ID format"})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID format", nil)
 		return
 	}
 
 	var user models.User
 	err = uc.UserColl.FindOne(timeoutCtx, bson.M{"_id": objectID}).Decode(&user)
 	if err == mongo.ErrNoDocuments {
-		ctx.StatusCode(iris.StatusNotFound)
-		ctx.JSON(iris.Map{"error": "User not found"})
+		utils.SendResponse(ctx, http.StatusNotFound, "error", "User not found", nil)
 		return
 	} else if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Database error: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Database error: "+err.Error(), nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{"data": user, "message": "User fetched successfully!"})
+	utils.SendResponse(ctx, http.StatusOK, "success", "User fetched successfully!", user)
 }
 
 // UpdateUserByID → PUT /users/{id}
@@ -109,15 +99,13 @@ func (uc *UserController) UpdateUserByID(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": "Invalid ID format"})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID format", nil)
 		return
 	}
 
 	var updateData models.UserRequest
 	if err := ctx.ReadJSON(&updateData); err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": err.Error()})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", err.Error(), nil)
 		return
 	}
 
@@ -139,27 +127,23 @@ func (uc *UserController) UpdateUserByID(ctx iris.Context) {
 
 	res, err := uc.UserColl.UpdateByID(ctxTimeout, objectID, update)
 	if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Database error: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Database error: "+err.Error(), nil)
 		return
 	}
 
 	if res.MatchedCount == 0 {
-		ctx.StatusCode(iris.StatusNotFound)
-		ctx.JSON(iris.Map{"error": "User not found"})
+		utils.SendResponse(ctx, http.StatusNotFound, "error", "User not found", nil)
 		return
 	}
 
 	var user models.User
 	err = uc.UserColl.FindOne(ctxTimeout, bson.M{"_id": objectID}).Decode(&user)
 	if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Database error: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Database error: "+err.Error(), nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{"message": "User updated successfully!", "data": user})
+	utils.SendResponse(ctx, http.StatusOK, "success", "User updated successfully!", user)
 }
 
 // DeleteUserByID → DELETE /users/{id}
@@ -167,8 +151,7 @@ func (uc *UserController) DeleteUserByID(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		ctx.StatusCode(iris.StatusBadRequest)
-		ctx.JSON(iris.Map{"error": "Invalid ID format"})
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID format", nil)
 		return
 	}
 
@@ -177,17 +160,14 @@ func (uc *UserController) DeleteUserByID(ctx iris.Context) {
 
 	res, err := uc.UserColl.DeleteOne(ctxTimeout, bson.M{"_id": objectID})
 	if err != nil {
-		ctx.StatusCode(iris.StatusInternalServerError)
-		ctx.JSON(iris.Map{"error": "Database error: " + err.Error()})
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Database error: "+err.Error(), nil)
 		return
 	}
 
 	if res.DeletedCount == 0 {
-		ctx.StatusCode(iris.StatusNotFound)
-		ctx.JSON(iris.Map{"error": "User not found"})
+		utils.SendResponse(ctx, http.StatusNotFound, "error", "User not found", nil)
 		return
 	}
 
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{"data": objectID, "message": "Deleted successfully"})
+	utils.SendResponse(ctx, http.StatusOK, "success", "User deleted successfully!", iris.Map{"user_id": objectID})
 }
