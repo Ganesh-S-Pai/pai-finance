@@ -27,6 +27,7 @@ type SignupRequest struct {
 	Password  string `json:"password"`
 	DOB       string `json:"dob"`
 	Gender    string `json:"gender"`
+	Phone     string `json:"phone"`
 }
 
 type LoginRequest struct {
@@ -48,7 +49,7 @@ func (ac *AuthController) Signup(ctx iris.Context) {
 		return
 	}
 
-	if req.Email == "" || req.Password == "" || req.FirstName == "" || req.LastName == "" || req.DOB == "" || req.Gender == "" {
+	if req.Email == "" || req.Password == "" || req.FirstName == "" || req.LastName == "" || req.DOB == "" || req.Gender == "" || req.Phone == "" {
 		ctx.StopWithJSON(http.StatusBadRequest, iris.Map{"error": "first_name, last_name, DOB, gender, email and password are required"})
 		return
 	}
@@ -91,6 +92,7 @@ func (ac *AuthController) Signup(ctx iris.Context) {
 		Password:  string(hashed),
 		DOB:       dob,
 		Gender:    req.Gender,
+		Phone:     req.Phone,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
 	}
@@ -108,6 +110,7 @@ func (ac *AuthController) Signup(ctx iris.Context) {
 		return
 	}
 
+	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(iris.Map{
 		"token": token,
 		"user": iris.Map{
@@ -115,6 +118,7 @@ func (ac *AuthController) Signup(ctx iris.Context) {
 			"first_name": user.FirstName,
 			"last_name":  user.LastName,
 			"email":      user.Email,
+			"phone":      user.Phone,
 			"dob": func() string {
 				if user.DOB.IsZero() {
 					return ""
@@ -159,6 +163,7 @@ func (ac *AuthController) Login(ctx iris.Context) {
 		return
 	}
 
+	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(iris.Map{
 		"token": token,
 		"user": iris.Map{
@@ -166,6 +171,7 @@ func (ac *AuthController) Login(ctx iris.Context) {
 			"first_name": user.FirstName,
 			"last_name":  user.LastName,
 			"email":      user.Email,
+			"phone":      user.Phone,
 			"dob": func() string {
 				if user.DOB.IsZero() {
 					return ""

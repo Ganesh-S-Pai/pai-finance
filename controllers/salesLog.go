@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"net/http"
 	"time"
 	"vhiw-sales-log/models"
 
@@ -41,6 +42,7 @@ func (sc *SalesController) AddSalesLog(ctx iris.Context) {
 		return
 	}
 
+	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(iris.Map{"inserted_id": result.InsertedID})
 }
 
@@ -65,6 +67,7 @@ func (sc *SalesController) GetSalesLogs(ctx iris.Context) {
 		}
 	}
 
+	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(salesLogs)
 }
 
@@ -95,6 +98,7 @@ func (sc *SalesController) GetSalesLogByID(ctx iris.Context) {
 		return
 	}
 
+	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(salesLog)
 }
 
@@ -141,6 +145,7 @@ func (sc *SalesController) UpdateSalesLogByID(ctx iris.Context) {
 		return
 	}
 
+	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(iris.Map{"message": "Updated successfully"})
 }
 
@@ -170,5 +175,6 @@ func (sc *SalesController) DeleteSalesLogByID(ctx iris.Context) {
 		return
 	}
 
+	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(iris.Map{"message": "Deleted successfully"})
 }
