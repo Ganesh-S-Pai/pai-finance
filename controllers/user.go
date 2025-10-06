@@ -6,7 +6,8 @@ import (
 	"context"
 	"net/http"
 	"time"
-	"vhiw-sales-log/models"
+
+	"github.com/Ganesh-S-Pai/pai-finance/models"
 
 	"github.com/kataras/iris/v12"
 	"go.mongodb.org/mongo-driver/bson"
@@ -158,7 +159,7 @@ func (uc *UserController) UpdateUserByID(ctx iris.Context) {
 	}
 
 	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(iris.Map{"message": "User updated successfully!", "data": user })
+	ctx.JSON(iris.Map{"message": "User updated successfully!", "data": user})
 }
 
 // DeleteUserByID → DELETE /users/{id}

@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"vhiw-sales-log/controllers"
-	"vhiw-sales-log/initializers"
+	"github.com/Ganesh-S-Pai/pai-finance/controllers"
+	"github.com/Ganesh-S-Pai/pai-finance/initializers"
 
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/core/router"

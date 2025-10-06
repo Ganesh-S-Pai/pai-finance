@@ -1,4 +1,4 @@
-module vhiw-sales-log
+module github.com/Ganesh-S-Pai/pai-finance
 
 go 1.25.1
 

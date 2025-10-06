@@ -1,9 +1,9 @@
 package main
 
 import (
-	"vhiw-sales-log/initializers"
-	"vhiw-sales-log/routes"
-	"vhiw-sales-log/controllers"
+	"github.com/Ganesh-S-Pai/pai-finance/controllers"
+	"github.com/Ganesh-S-Pai/pai-finance/initializers"
+	"github.com/Ganesh-S-Pai/pai-finance/routes"
 
 	"github.com/iris-contrib/middleware/cors"
 	"github.com/joho/godotenv"
@@ -37,7 +37,7 @@ func main() {
 	router := app.Party("/api/v1")
 
 	routes.AuthRoutes(router)
-	
+
 	adminRoutes := router.Party("/admin", controllers.AuthMiddleware(userColl))
 	routes.UserRoutes(adminRoutes)
 	vhiwRoutes := router.Party("/vhiw", controllers.AuthMiddleware(userColl))
