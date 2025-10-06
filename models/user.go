@@ -23,7 +23,6 @@ type UserRequest struct {
 	FirstName string             `bson:"first_name" json:"first_name"`
 	LastName  string             `bson:"last_name" json:"last_name"`
 	Email     string             `bson:"email" json:"email"`
-	Password  string             `bson:"password" json:"password"`
 	Phone     string             `bson:"phone" json:"phone"`
 	DOB       time.Time          `bson:"dob" json:"dob"`
 	Gender    string             `bson:"gender" json:"gender"`

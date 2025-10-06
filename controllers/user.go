@@ -117,7 +117,6 @@ func (uc *UserController) UpdateUserByID(ctx iris.Context) {
 			"first_name": updateData.FirstName,
 			"last_name":  updateData.LastName,
 			"email":      updateData.Email,
-			"password":   updateData.Password,
 			"phone":      updateData.Phone,
 			"dob":        updateData.DOB,
 			"gender":     updateData.Gender,
