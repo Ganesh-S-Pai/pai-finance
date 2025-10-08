@@ -24,27 +24,6 @@ func NewSalesController(salesColl *mongo.Collection) *SalesController {
 	}
 }
 
-// AddSalesLog → POST /salesLogs
-func (sc *SalesController) AddSalesLog(ctx iris.Context) {
-	var salesLog models.SalesLog
-	if err := ctx.ReadJSON(&salesLog); err != nil {
-		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid request payload", nil)
-		return
-	}
-
-	// Use per-request context with timeout
-	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	result, err := sc.SalesColl.InsertOne(timeoutCtx, salesLog)
-	if err != nil {
-		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to insert sales-logs: "+err.Error(), nil)
-		return
-	}
-
-	utils.SendResponse(ctx, http.StatusOK, "success", "Sales log created successfully!", iris.Map{"inserted_id": result.InsertedID})
-}
-
 // GetSalesLogs → GET /salesLogs
 func (sc *SalesController) GetSalesLogs(ctx iris.Context) {
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -65,7 +44,7 @@ func (sc *SalesController) GetSalesLogs(ctx iris.Context) {
 		}
 	}
 
-	utils.SendResponse(ctx, http.StatusOK, "success", "Fetched sales-logs successfully!: ", salesLogs)
+	utils.SendResponse(ctx, http.StatusOK, "success", "Fetched sales-logs successfully!", salesLogs)
 }
 
 // GetSalesLogByID → GET /salesLogs/{id}
@@ -95,6 +74,58 @@ func (sc *SalesController) GetSalesLogByID(ctx iris.Context) {
 	utils.SendResponse(ctx, http.StatusOK, "success", "Fetched sales-log successfully!", salesLog)
 }
 
+// AddSalesLog → POST /salesLogs
+func (sc *SalesController) AddSalesLog(ctx iris.Context) {
+	var salesLog models.SalesLogRequest
+	if err := ctx.ReadJSON(&salesLog); err != nil {
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid request payload", nil)
+		return
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	count, err := sc.SalesColl.CountDocuments(timeoutCtx, bson.M{"date": salesLog.Date})
+	if err != nil {
+		utils.SendResponseAndStop(ctx, http.StatusInternalServerError, "error", "database error", nil)
+		return
+	}
+	if count > 0 {
+		utils.SendResponseAndStop(ctx, http.StatusConflict, "error", "Date already added!", nil)
+		return
+	}
+
+	var prevSalesLog models.SalesLog
+	err = sc.SalesColl.FindOne(timeoutCtx, bson.M{"date": salesLog.Date.AddDate(0, 0, -1)}).Decode(&prevSalesLog)
+	if err != nil && err != mongo.ErrNoDocuments {
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to fetch previous day log: "+err.Error(), nil)
+		return
+	}
+
+	physical := prevSalesLog.Physical + salesLog.Inward - salesLog.Outward - salesLog.Sales
+
+	insert := models.SalesLog{
+		Date:       salesLog.Date,
+		Opening:    prevSalesLog.Physical,
+		Inward:     salesLog.Inward,
+		Sales:      salesLog.Sales,
+		Outward:    salesLog.Outward,
+		Physical:   physical,
+		System:     salesLog.System,
+		Difference: salesLog.System - prevSalesLog.Physical,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+	}
+
+	result, err := sc.SalesColl.InsertOne(timeoutCtx, insert)
+	if err != nil {
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to insert sales-logs: "+err.Error(), nil)
+		return
+	}
+
+	utils.SendResponse(ctx, http.StatusOK, "success", "Sales log created successfully!", iris.Map{"inserted_id": result.InsertedID})
+}
+
 // UpdateSalesLogByID → PUT /salesLogs/{id}
 func (sc *SalesController) UpdateSalesLogByID(ctx iris.Context) {
 	id := ctx.Params().Get("id")
@@ -104,7 +135,7 @@ func (sc *SalesController) UpdateSalesLogByID(ctx iris.Context) {
 		return
 	}
 
-	var updateData models.SalesLog
+	var updateData models.SalesLogRequest
 	if err := ctx.ReadJSON(&updateData); err != nil {
 		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid request payload"+err.Error(), nil)
 		return
@@ -113,13 +144,21 @@ func (sc *SalesController) UpdateSalesLogByID(ctx iris.Context) {
 	ctxTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	var prevSalesLog models.SalesLog
+	err = sc.SalesColl.FindOne(ctxTimeout, bson.M{"date": updateData.Date.AddDate(0, 0, -1)}).Decode(&prevSalesLog)
+	if err != nil && err != mongo.ErrNoDocuments {
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to fetch previous day log: "+err.Error(), nil)
+		return
+	}
+
 	update := bson.M{
 		"$set": bson.M{
-			"date":    updateData.Date,
-			"opening": updateData.Opening,
-			"inward":  updateData.Inward,
-			"sales":   updateData.Sales,
-			"outward": updateData.Outward,
+			"inward":     updateData.Inward,
+			"sales":      updateData.Sales,
+			"outward":    updateData.Outward,
+			"system":     updateData.System,
+			"difference": updateData.System - prevSalesLog.Physical,
+			"updated_at": time.Now(),
 		},
 	}
 
