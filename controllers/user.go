@@ -77,7 +77,7 @@ func (uc *UserController) GetUserByID(ctx iris.Context) {
 
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID format", nil)
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID", nil)
 		return
 	}
 
@@ -99,7 +99,7 @@ func (uc *UserController) UpdateUserByID(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID format", nil)
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID", nil)
 		return
 	}
 
@@ -150,7 +150,7 @@ func (uc *UserController) DeleteUserByID(ctx iris.Context) {
 	id := ctx.Params().Get("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID format", nil)
+		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid ID", nil)
 		return
 	}
 

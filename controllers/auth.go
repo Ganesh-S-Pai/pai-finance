@@ -147,12 +147,12 @@ func (ac *AuthController) Login(ctx iris.Context) {
 	var user models.User
 	err := ac.UserColl.FindOne(cctx, bson.M{"email": strings.ToLower(req.Email)}).Decode(&user)
 	if err != nil {
-		utils.SendResponseAndStop(ctx, http.StatusUnauthorized, "error", "Invalid credentials", nil)
+		utils.SendResponseAndStop(ctx, http.StatusUnauthorized, "error", "Login failed. Please check your credentials and try again.", nil)
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		utils.SendResponseAndStop(ctx, http.StatusUnauthorized, "error", "Invalid credentials", nil)
+		utils.SendResponseAndStop(ctx, http.StatusUnauthorized, "error", "Login failed. Please check your credentials and try again.", nil)
 		return
 	}
 
@@ -192,7 +192,7 @@ func AuthMiddleware(userColl *mongo.Collection) iris.Handler {
 		}
 		parts := strings.SplitN(auth, " ", 2)
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			utils.SendResponse(ctx, http.StatusUnauthorized, "error", "invalid authorization header", nil)
+			utils.SendResponse(ctx, http.StatusUnauthorized, "error", "Session expired!", nil)
 			return
 		}
 		tokenStr := parts[1]

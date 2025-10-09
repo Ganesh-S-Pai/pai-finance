@@ -1,11 +1,11 @@
-PUT http://localhost:8080/api/v1/vhiw/sales-logs/68e6a176668d34e22698b294
+PUT http://localhost:8080/api/v1/vhiw/sales-logs/68e7df192639eebd62c55841
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjAwMTY5NjAsImlhdCI6MTc1OTc1Nzc2MCwic3ViIjoiNjhlMjMxZjJhMzM2YzE3Y2UwMDY1NDFjIn0.JA6Wy0kOE9ri62x6VNW9GRVtkSoRjmuJyaNc97XZexc
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjAyODU4MTMsImlhdCI6MTc2MDAyNjYxMywic3ViIjoiNjhlNTc4YjA0MjJiYjlmYjk4OTU1YTQ4In0.42DGIcjSwmczdBn2a6sdDSwJBi5PrAs_zrHGcG_w1oU
 
 {
-  "date": "2025-10-07T11:30:00Z",
-  "inward": 38,
-  "sales": 21,
-  "outward": 10,
-  "system": 6718
+  "date": "2025-10-09T11:30:00Z",
+  "inward": 0,
+  "sales": 16,
+  "outward": 0
 }
+

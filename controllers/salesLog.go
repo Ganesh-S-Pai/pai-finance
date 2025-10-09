@@ -95,14 +95,26 @@ func (sc *SalesController) AddSalesLog(ctx iris.Context) {
 		return
 	}
 
+	startOfPrevDay := time.Date(salesLog.Date.Year(), salesLog.Date.Month(), salesLog.Date.Day()-1, 0, 0, 0, 0, salesLog.Date.Location())
+	endOfPrevDay := startOfPrevDay.Add(24 * time.Hour)
+
+	filter := bson.M{
+		"date": bson.M{
+			"$gte": startOfPrevDay,
+			"$lt":  endOfPrevDay,
+		},
+	}
+
 	var prevSalesLog models.SalesLog
-	err = sc.SalesColl.FindOne(timeoutCtx, bson.M{"date": salesLog.Date.AddDate(0, 0, -1)}).Decode(&prevSalesLog)
+	err = sc.SalesColl.FindOne(timeoutCtx, filter).Decode(&prevSalesLog)
 	if err != nil && err != mongo.ErrNoDocuments {
 		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to fetch previous day log: "+err.Error(), nil)
 		return
 	}
 
 	physical := prevSalesLog.Physical + salesLog.Inward - salesLog.Outward - salesLog.Sales
+
+	difference := salesLog.System - prevSalesLog.Physical
 
 	insert := models.SalesLog{
 		Date:       salesLog.Date,
@@ -112,7 +124,7 @@ func (sc *SalesController) AddSalesLog(ctx iris.Context) {
 		Outward:    salesLog.Outward,
 		Physical:   physical,
 		System:     salesLog.System,
-		Difference: salesLog.System - prevSalesLog.Physical,
+		Difference: difference,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -135,7 +147,7 @@ func (sc *SalesController) UpdateSalesLogByID(ctx iris.Context) {
 		return
 	}
 
-	var updateData models.SalesLogRequest
+	var updateData models.SalesLogUpdateRequest
 	if err := ctx.ReadJSON(&updateData); err != nil {
 		utils.SendResponse(ctx, http.StatusBadRequest, "error", "Invalid request payload"+err.Error(), nil)
 		return
@@ -144,20 +156,45 @@ func (sc *SalesController) UpdateSalesLogByID(ctx iris.Context) {
 	ctxTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	startOfPrevDay := time.Date(updateData.Date.Year(), updateData.Date.Month(), updateData.Date.Day()-1, 0, 0, 0, 0, updateData.Date.Location())
+	endOfPrevDay := startOfPrevDay.Add(24 * time.Hour)
+
+	filter := bson.M{
+		"date": bson.M{
+			"$gte": startOfPrevDay,
+			"$lt":  endOfPrevDay,
+		},
+	}
+
 	var prevSalesLog models.SalesLog
-	err = sc.SalesColl.FindOne(ctxTimeout, bson.M{"date": updateData.Date.AddDate(0, 0, -1)}).Decode(&prevSalesLog)
+	err = sc.SalesColl.FindOne(ctxTimeout, filter).Decode(&prevSalesLog)
 	if err != nil && err != mongo.ErrNoDocuments {
 		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to fetch previous day log: "+err.Error(), nil)
 		return
 	}
+
+	var currentSalesLog models.SalesLog
+	err = sc.SalesColl.FindOne(ctxTimeout, bson.M{"_id": objectID}).Decode(&currentSalesLog)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			utils.SendResponse(ctx, http.StatusNotFound, "error", "Sales log not found", nil)
+			return
+		}
+		utils.SendResponse(ctx, http.StatusInternalServerError, "error", "Failed to fetch current log: "+err.Error(), nil)
+		return
+	}
+
+	physical := prevSalesLog.Physical + updateData.Inward - updateData.Outward - updateData.Sales
+
+	difference := currentSalesLog.System - prevSalesLog.Physical
 
 	update := bson.M{
 		"$set": bson.M{
 			"inward":     updateData.Inward,
 			"sales":      updateData.Sales,
 			"outward":    updateData.Outward,
-			"system":     updateData.System,
-			"difference": updateData.System - prevSalesLog.Physical,
+			"physical":   physical,
+			"difference": difference,
 			"updated_at": time.Now(),
 		},
 	}

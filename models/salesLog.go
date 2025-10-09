@@ -29,11 +29,9 @@ type SalesLogRequest struct {
 }
 
 type SalesLogUpdateRequest struct {
-	Date       time.Time `bson:"date" json:"date"`
-	Inward     int       `bson:"inward" json:"inward"`
-	Sales      int       `bson:"sales" json:"sales"`
-	Outward    int       `bson:"outward" json:"outward"`
-	System     int       `bson:"system" json:"system"`
-	Difference int       `bson:"difference" json:"difference"`
-	UpdatedAt  time.Time `bson:"updated_at" json:"updated_at"`
+	Date    time.Time `bson:"date" json:"date"`
+	Inward  int       `bson:"inward" json:"inward"`
+	Sales   int       `bson:"sales" json:"sales"`
+	Outward int       `bson:"outward" json:"outward"`
+	System  int       `bson:"system" json:"system"`
 }
