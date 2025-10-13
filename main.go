@@ -33,6 +33,8 @@ func main() {
 
 	db := initializers.Client.Database("mongo-golang")
 	userColl := db.Collection("users")
+	salesColl := db.Collection("sales-logs")
+	airbnbColl := db.Collection("airbnb")
 
 	router := app.Party("/api/v1")
 
@@ -40,8 +42,10 @@ func main() {
 
 	adminRoutes := router.Party("/admin", controllers.AuthMiddleware(userColl))
 	routes.UserRoutes(adminRoutes)
-	vhiwRoutes := router.Party("/vhiw", controllers.AuthMiddleware(userColl))
+	vhiwRoutes := router.Party("/vhiw", controllers.AuthMiddleware(salesColl))
 	routes.SalesLogRoutes(vhiwRoutes)
+	AirbnbRoutes := router.Party("/airbnb", controllers.AuthMiddleware(airbnbColl))
+	routes.StatementRoutes(AirbnbRoutes)
 
 	app.Listen(":8080")
 }
