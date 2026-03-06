@@ -20,7 +20,7 @@ func init() {
 	app = iris.New()
 
 	crs := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "https://pai-finance.web.app"},
+		AllowedOrigins:   []string{"http://localhost:5173", "https://pai-finance.web.app", "https://d2jqgx7872rq2f.cloudfront.net"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
